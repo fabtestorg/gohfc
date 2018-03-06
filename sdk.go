@@ -47,9 +47,9 @@ func InitSDK(configPath string) error {
 		var file os.FileInfo
 		for _, item := range list {
 			if !item.IsDir() {
-				if file == nil{
+				if file == nil {
 					file = item
-				}else if item.ModTime().After(file.ModTime()){
+				} else if item.ModTime().After(file.ModTime()) {
 					file = item
 				}
 			}
@@ -58,7 +58,7 @@ func InitSDK(configPath string) error {
 	}
 	prikey := findCert(filepath.Join(mspPath, "keystore"))
 	pubkey := findCert(filepath.Join(mspPath, "signcerts"))
-	if prikey == "" || pubkey == ""{
+	if prikey == "" || pubkey == "" {
 		return fmt.Errorf("prikey or cert is no such file")
 	}
 	sdklogger.Debugf("privateKey : %s", prikey)
@@ -118,21 +118,18 @@ func (sdk *sdkHandler) QueryByQscc(args []string, peers []string) ([]*QueryRespo
 	return sdk.client.Query(sdk.identity, &chaincode, peers)
 }
 
-func (sdk *sdkHandler) ListenEvent(peername, mspid string) {
+func (sdk *sdkHandler) ListenEvent(peername, mspid string) (chan BlockEventResponse, error) {
 	if peername == "" || mspid == "" {
-		sdklogger.Debug("ListenEvent peername or mspid is empty ")
-		return
+		return nil, fmt.Errorf("ListenEvent peername or mspid is empty ")
 	}
 	ch := make(chan BlockEventResponse)
-	err := sdk.client.Listen(context.Background(), sdk.identity, peername, mspid, ch)
+	ctx, cancel := context.WithCancel(context.Background())
+	err := sdk.client.Listen(ctx, sdk.identity, peername, mspid, ch)
 	if err != nil {
-		sdklogger.Debug(err)
-		return
+		cancel()
+		return nil, err
 	}
-
-	for d := range ch {
-		sdklogger.Debug(d)
-	}
+	return ch, nil
 }
 
 func getChainCodeObj(args []string) (*ChainCode, error) {

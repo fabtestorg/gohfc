@@ -29,7 +29,17 @@ func main() {
 		}
 		fmt.Println(string(result[0].Response.Response.GetPayload()))
 	} else if args[0] == "listen" {
-		gohfc.GetHandler().ListenEvent("peer0", viper.GetString("other.localMspId"))
+		ch, err := gohfc.GetHandler().ListenEvent("peer0", viper.GetString("other.localMspId"))
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		for {
+			select {
+			case v := <-ch:
+				fmt.Println(v)
+			}
+		}
 	} else {
 		result, err := gohfc.GetHandler().QueryByQscc(args, peers)
 		if err != nil {
