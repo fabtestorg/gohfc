@@ -1,0 +1,29 @@
+crypto:
+  family: ecdsa
+  algorithm: P256-SHA256
+  hash: SHA2-256
+orderers:
+  orderer0:
+    host: orderer.ord1.example.com:7050
+    insecure: true
+    tlsPath: ./crypto-config/ordererOrganizations/ord1.example.com/orderers/orderer.ord1.example.com/tls/server.crt
+peers:
+  peer0:
+    host: peer0.org1.example.com:7051
+    insecure: true
+    tlsPath: ./crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.crt
+  peer1:
+    host: peer1.org1.example.com:8051
+    insecure: true
+    tlsPath: ./crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls/server.crt
+eventPeers:
+  peer0:
+    host: peer0.org1.example.com:7053
+    insecure: true
+    tlsPath: ./crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.crt
+other:
+    mspConfigPath: ./crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
+    localMspId:          Org1MSP
+    channelId:           mychannel
+    chaincodeName:       mycc
+    chaincodeVersion:    1.0
