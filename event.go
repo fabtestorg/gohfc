@@ -27,6 +27,7 @@ type BlockEventResponse struct {
 	ChainCodeName    string
 	ChainCodeVersion string
 	Status           int32
+	ChainCodeInput   [][]byte
 	CCEvents         []*CCEvent
 }
 
@@ -167,11 +168,27 @@ func decodeEventBlock(pl []byte, idx int, metadata [][]byte) (BlockEventResponse
 		}
 
 		chainCodeActionPayload := &peer.ChaincodeActionPayload{}
+
 		err = proto.Unmarshal(tx.Actions[0].Payload, chainCodeActionPayload)
 		if err != nil {
 			response.Error = err
 			return response
 		}
+
+		chaincodeProposalPayload := &peer.ChaincodeProposalPayload{}
+		err = proto.Unmarshal(chainCodeActionPayload.ChaincodeProposalPayload, chaincodeProposalPayload)
+		if err != nil {
+			response.Error = err
+			return response
+		}
+
+		chaincodeInvocationSpec := &peer.ChaincodeInvocationSpec{}
+		err = proto.Unmarshal(chaincodeProposalPayload.Input, chaincodeInvocationSpec)
+		if err != nil {
+			response.Error = err
+			return response
+		}
+		response.ChainCodeInput = chaincodeInvocationSpec.GetChaincodeSpec().GetInput().Args
 
 		propRespPayload := &peer.ProposalResponsePayload{}
 		err = proto.Unmarshal(chainCodeActionPayload.Action.ProposalResponsePayload, propRespPayload)
