@@ -6,22 +6,25 @@ package gohfc
 
 import (
 	"context"
-	"google.golang.org/grpc"
-	"github.com/hyperledger/fabric/protos/peer"
-	"github.com/golang/protobuf/proto"
 	"encoding/pem"
-	"github.com/hyperledger/fabric/protos/msp"
-	"io"
+	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric/core/ledger/util"
 	"github.com/hyperledger/fabric/protos/common"
+	"github.com/hyperledger/fabric/protos/msp"
+	"github.com/hyperledger/fabric/protos/peer"
+	"google.golang.org/grpc"
+	"io"
 	"time"
 )
 
-const GRPC_MAX_SIZE  =100 *1024*1024
+const GRPC_MAX_SIZE = 100 * 1024 * 1024
+
 // BlockEventResponse holds event response when block is committed to peer.
 type BlockEventResponse struct {
 	// Error is error message.
 	Error error
 	// TxId is transaction id that generates this event
+	IsVaild          bool
 	TxID             string
 	ChannelName      string
 	ChainCodeName    string
@@ -42,8 +45,8 @@ type eventHub struct {
 	client     peer.Events_ChatClient
 }
 
-func (e *eventHub) connect(ctx context.Context, p *Peer) (error) {
-	p.Opts = append(p.Opts, grpc.WithBlock(),grpc.WithTimeout(5*time.Second),
+func (e *eventHub) connect(ctx context.Context, p *Peer) error {
+	p.Opts = append(p.Opts, grpc.WithBlock(), grpc.WithTimeout(5*time.Second),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(GRPC_MAX_SIZE),
 			grpc.MaxCallSendMsgSize(GRPC_MAX_SIZE)))
 	conn, err := grpc.Dial(p.Uri, p.Opts...)
@@ -60,7 +63,7 @@ func (e *eventHub) connect(ctx context.Context, p *Peer) (error) {
 	return nil
 }
 
-func (e *eventHub) register(mspId string, identity *Identity, crypto CryptoSuite) (error) {
+func (e *eventHub) register(mspId string, identity *Identity, crypto CryptoSuite) error {
 	creator, err := proto.Marshal(&msp.SerializedIdentity{
 		Mspid:   mspId,
 		IdBytes: pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: identity.Certificate.Raw})})
@@ -93,7 +96,7 @@ func (e *eventHub) disconnect() {
 	e.connection.Close()
 }
 
-func newEventListener(ctx context.Context, response chan<- BlockEventResponse, crypto CryptoSuite, identity *Identity, mspId string, p *Peer) (error) {
+func newEventListener(ctx context.Context, response chan<- BlockEventResponse, crypto CryptoSuite, identity *Identity, mspId string, p *Peer) error {
 	hub := new(eventHub)
 	err := hub.connect(ctx, p)
 	if err != nil {
@@ -124,19 +127,20 @@ func (e *eventHub) readBlock(response chan<- BlockEventResponse) {
 		case *peer.Event_Block:
 			meta := in.GetBlock().Metadata.Metadata
 			for i, bd := range in.GetBlock().Data.Data {
-				response <- decodeEventBlock(bd, i, meta)
+				response <- DecodeEventBlock(bd, i, meta)
 			}
 
 		}
 	}
 }
 
-func decodeEventBlock(pl []byte, idx int, metadata [][]byte) (BlockEventResponse) {
+func DecodeEventBlock(pl []byte, idx int, metadata [][]byte) BlockEventResponse {
 	response := BlockEventResponse{}
 	envelope := new(common.Envelope)
 	payload := new(common.Payload)
 	header := new(common.ChannelHeader)
 	ex := &peer.ChaincodeHeaderExtension{}
+
 	if err := proto.Unmarshal(pl, envelope); err != nil {
 		response.Error = err
 		return response
@@ -152,7 +156,8 @@ func decodeEventBlock(pl []byte, idx int, metadata [][]byte) (BlockEventResponse
 		response.Error = err
 		return response
 	}
-
+	txsFltr := util.TxValidationFlags(metadata[common.BlockMetadataIndex_TRANSACTIONS_FILTER])
+	response.IsVaild = txsFltr.IsValid(idx)
 	response.TxID = header.TxId
 	response.ChannelName = header.ChannelId
 	response.ChainCodeName = ex.ChaincodeId.Name
@@ -210,7 +215,7 @@ func decodeEventBlock(pl []byte, idx int, metadata [][]byte) (BlockEventResponse
 			return response
 		}
 		if ccEvent != nil {
-			response.CCEvents=append(response.CCEvents,&CCEvent{EventName:ccEvent.EventName,EventPayload:ccEvent.Payload})
+			response.CCEvents = append(response.CCEvents, &CCEvent{EventName: ccEvent.EventName, EventPayload: ccEvent.Payload})
 		}
 	}
 	return response
