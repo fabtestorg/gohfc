@@ -25,6 +25,8 @@ type BlockEventResponse struct {
 	Error error
 	// TxId is transaction id that generates this event
 	IsVaild          bool
+	BlockHeight      uint64
+	TxIndex          int
 	TxID             string
 	ChannelName      string
 	ChainCodeName    string
@@ -127,14 +129,14 @@ func (e *eventHub) readBlock(response chan<- BlockEventResponse) {
 		case *peer.Event_Block:
 			meta := in.GetBlock().Metadata.Metadata
 			for i, bd := range in.GetBlock().Data.Data {
-				response <- DecodeEventBlock(bd, i, meta)
+				response <- DecodeEventBlock(bd, in.GetBlock().GetHeader().Number, i, meta)
 			}
 
 		}
 	}
 }
 
-func DecodeEventBlock(pl []byte, idx int, metadata [][]byte) BlockEventResponse {
+func DecodeEventBlock(pl []byte, blockNum uint64, idx int, metadata [][]byte) BlockEventResponse {
 	response := BlockEventResponse{}
 	envelope := new(common.Envelope)
 	payload := new(common.Payload)
@@ -158,6 +160,8 @@ func DecodeEventBlock(pl []byte, idx int, metadata [][]byte) BlockEventResponse 
 	}
 	txsFltr := util.TxValidationFlags(metadata[common.BlockMetadataIndex_TRANSACTIONS_FILTER])
 	response.IsVaild = txsFltr.IsValid(idx)
+	response.BlockHeight = blockNum
+	response.TxIndex = idx
 	response.TxID = header.TxId
 	response.ChannelName = header.ChannelId
 	response.ChainCodeName = ex.ChaincodeId.Name
