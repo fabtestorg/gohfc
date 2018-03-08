@@ -142,7 +142,6 @@ func DecodeEventBlock(pl []byte, blockNum uint64, idx int, metadata [][]byte) Bl
 	payload := new(common.Payload)
 	header := new(common.ChannelHeader)
 	ex := &peer.ChaincodeHeaderExtension{}
-
 	if err := proto.Unmarshal(pl, envelope); err != nil {
 		response.Error = err
 		return response
@@ -158,16 +157,18 @@ func DecodeEventBlock(pl []byte, blockNum uint64, idx int, metadata [][]byte) Bl
 		response.Error = err
 		return response
 	}
+
 	txsFltr := util.TxValidationFlags(metadata[common.BlockMetadataIndex_TRANSACTIONS_FILTER])
 	response.IsVaild = txsFltr.IsValid(idx)
 	response.BlockHeight = blockNum
 	response.TxIndex = idx
 	response.TxID = header.TxId
 	response.ChannelName = header.ChannelId
-	response.ChainCodeName = ex.ChaincodeId.Name
-	response.ChainCodeVersion = ex.ChaincodeId.Version
+	if ex.ChaincodeId != nil {
+		response.ChainCodeName = ex.ChaincodeId.Name
+		response.ChainCodeVersion = ex.ChaincodeId.Version
+	}
 	response.Status = int32(metadata[2][idx])
-
 	if common.HeaderType(header.Type) == common.HeaderType_ENDORSER_TRANSACTION {
 		tx := &peer.Transaction{}
 		err := proto.Unmarshal(payload.Data, tx)
