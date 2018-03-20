@@ -36,6 +36,7 @@ type PeerConfig struct {
 	Host     string `yaml:"host"`
 	Insecure bool   `yaml:"insecure"`
 	TlsPath  string `yaml:"tlsPath"`
+	OrgName  string `yaml:"orgname"`
 }
 
 // OrdererConfig hold config values for Orderer. ULR is in address:port notation
@@ -71,6 +72,6 @@ func NewCAConfig(path string) (*CAConfig, error) {
 	err = yaml.Unmarshal([]byte(data), config)
 	if err != nil {
 		return nil, err
-	}	
+	}
 	return config, nil
 }

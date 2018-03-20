@@ -10,10 +10,12 @@ orderers:
 peers:
   peer0:
     host: peer0.org1.example.com:7051
+    orgname: org1
     insecure: true
     tlsPath: ./crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.crt
   peer1:
     host: peer1.org1.example.com:8051
+    orgname: org1
     insecure: true
     tlsPath: ./crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls/server.crt
 eventPeers:
@@ -27,3 +29,7 @@ other:
     channelId:           mychannel
     chaincodeName:       mycc
     chaincodeVersion:    1.0
+policy:
+    orgs: org1 org2
+    rule: or
+
