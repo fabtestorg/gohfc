@@ -1,8 +1,8 @@
 ---
 crypto:
-  family: ecdsa
-  algorithm: P256-SHA256
-  hash: SHA2-256
+  family: gm
+  algorithm: P256SM2
+  hash: SM3
 orderers:
   orderer0:
     host: orderer.example.com:7050
