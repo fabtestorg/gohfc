@@ -28,6 +28,9 @@ type ChannelConfig struct {
 	ChaincodeName    string `yaml:"chaincodeName"`
 	ChaincodeVersion string `yaml:"chaincodeVersion"`
 	ChaincodePolicy  `yaml:"chaincodePolicy"`
+	TlsMutual  bool   `yaml:"tlsMutual"`
+	ClientCert string `yaml:"clientCert"`
+	ClientKey  string `yaml:"clientKey"`
 }
 
 type ChaincodePolicy struct {
@@ -67,9 +70,6 @@ type PeerConfig struct {
 	UseTLS     bool   `yaml:"useTLS"`
 	TlsPath    string `yaml:"tlsPath"`
 	DomainName string `yaml:"domainName"`
-	TlsMutual  bool   `yaml:"tlsMutual"`
-	ClientCert string `yaml:"clientCert"`
-	ClientKey  string `yaml:"clientKey"`
 }
 
 // OrdererConfig hold config values for Orderer. ULR is in address:port notation
@@ -78,9 +78,6 @@ type OrdererConfig struct {
 	UseTLS     bool   `yaml:"useTLS"`
 	TlsPath    string `yaml:"tlsPath"`
 	DomainName string `yaml:"domainName"`
-	TlsMutual  bool   `yaml:"tlsMutual"`
-	ClientCert string `yaml:"clientCert"`
-	ClientKey  string `yaml:"clientKey"`
 }
 
 // NewFabricClientConfig create config from provided yaml file in path

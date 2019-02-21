@@ -135,13 +135,13 @@ func (o *Orderer) getGenesisBlock(identity Identity, crypto CryptoSuite, channel
 }
 
 // NewOrdererFromConfig create new Orderer from config
-func NewOrdererFromConfig(conf OrdererConfig) (*Orderer, error) {
+func NewOrdererFromConfig(cliConfig ChannelConfig, conf OrdererConfig) (*Orderer, error) {
 	o := Orderer{Uri: conf.Host, caPath: conf.TlsPath}
 	if !conf.UseTLS {
 		o.Opts = []grpc.DialOption{grpc.WithInsecure()}
 	} else if o.caPath != "" {
-		if conf.TlsMutual {
-			cert, err := tls.LoadX509KeyPair(conf.ClientCert, conf.ClientKey)
+		if cliConfig.TlsMutual {
+			cert, err := tls.LoadX509KeyPair(cliConfig.ClientCert, cliConfig.ClientKey)
 			if err != nil {
 				return nil, fmt.Errorf("failed to Load client keypair: %s\n", err.Error())
 			}
